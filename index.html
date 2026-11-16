@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pakali Paver and Fence – Quotes</title>
+<meta name="theme-color" content="#6E8F2E">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pakali">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --green:#6E8F2E; --green-dark:#55701F; --lime:#8DC63F; --red:#D8232A;
+  --ink:#1D2216; --muted:#5E6656; --line:#C9CFBF; --paper:#FFFFFF; --surface:#EEF1E8; --field:#F6F8F2;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--surface);color:var(--ink);font:16px/1.4 var(--body);-webkit-text-size-adjust:100%;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(24px + env(safe-area-inset-bottom)) env(safe-area-inset-left)}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px}
+
+/* Top bar */
+.top{display:flex;align-items:center;gap:12px;padding:12px 0 6px}
+.top img{width:52px;height:auto}
+.top h1{font:700 24px/1 var(--display);margin:0;flex:1}
+.top h1 small{display:block;font:500 14px var(--body);color:var(--muted);margin-top:3px}
+.icon-btn{border:1px solid var(--line);background:var(--paper);border-radius:10px;width:44px;height:44px;font-size:22px;cursor:pointer}
+
+/* Cards */
+.card{background:var(--paper);border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 1px 3px rgba(40,50,20,.08)}
+.card h2{font:700 20px var(--display);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.card h2 .n{background:var(--green);color:#fff;border-radius:50%;width:26px;height:26px;display:inline-grid;place-items:center;font-size:15px}
+label.f{display:block;font-weight:600;font-size:14px;margin:10px 0 4px;color:var(--ink)}
+input[type=text],input[type=number],input[type=password],input[type=tel],select,textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;background:var(--field);padding:11px 12px;font-size:16px;min-height:46px}
+textarea{min-height:64px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--lime);outline-offset:0;border-color:var(--lime)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.money{position:relative}
+.money span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.money input{padding-left:24px}
+.hint{font-size:13px;color:var(--muted);margin:4px 0 0}
+
+/* Service toggles */
+.svc{border:1.5px solid var(--line);border-radius:12px;margin:10px 0;overflow:hidden}
+.svc>label.head{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;font-weight:700;font-size:17px}
+.svc>label.head input{width:24px;height:24px;accent-color:var(--green)}
+.svc>label.head .sub{display:block;font-weight:500;font-size:13px;color:var(--muted)}
+.svc .body{display:none;padding:0 14px 14px;border-top:1px solid var(--line)}
+.svc.on{border-color:var(--green)}
+.svc.on .body{display:block}
+.svc .line-total{margin-top:10px;font-weight:700;text-align:right}
+
+/* Paver color picker */
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:4px}
+.sw{position:relative;border:0;padding:0;background:none;cursor:pointer;text-align:center;min-width:0}
+.sw img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:3px solid transparent;display:block}
+.sw span{display:block;font-size:10.5px;letter-spacing:-.2px;font-weight:600;margin-top:3px;line-height:1.15}
+.sw[aria-checked=true] img{border-color:var(--green)}
+.sw[aria-checked=true]::after{content:"✓";position:absolute;top:4px;right:4px;background:var(--green);color:#fff;width:22px;height:22px;border-radius:50%;font-size:14px;display:grid;place-items:center;font-weight:700}
+.check{display:flex;align-items:center;gap:10px;margin-top:12px;font-weight:600;font-size:15px}
+.check input{width:22px;height:22px;accent-color:var(--green)}
+
+/* Extras */
+.extra{display:grid;grid-template-columns:1fr 40px;gap:8px;margin-top:10px;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.extra .xdesc{grid-column:1/-1}
+.del{border:0;background:none;font-size:24px;color:var(--muted);cursor:pointer;height:46px}
+
+/* Total bar */
+.totalbox{background:var(--green);color:#fff;border-radius:14px;padding:14px 16px;margin:12px 0;display:flex;justify-content:space-between;align-items:baseline}
+.totalbox b{font:700 30px var(--display)}
+.totalbox small{display:block;opacity:.9;font-size:14px}
+
+/* Buttons */
+.btn{display:block;width:100%;border-radius:12px;padding:14px;font-weight:700;font-size:17px;cursor:pointer;border:1.5px solid var(--green-dark);background:var(--paper);color:var(--green-dark);margin-top:10px;min-height:52px}
+.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.small{display:inline-block;width:auto;padding:9px 14px;font-size:15px;min-height:0;margin-top:8px}
+.btns2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Photo */
+.photo-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-pick label{display:grid;place-items:center;border:1.5px dashed var(--green-dark);border-radius:12px;padding:16px 8px;font-weight:700;color:var(--green-dark);cursor:pointer;text-align:center;min-height:64px}
+.photo-pick input{display:none}
+.viewer{margin-top:12px;display:none}
+.viewer.show{display:block}
+.tabs{display:flex;background:var(--surface);border-radius:10px;padding:3px;margin-bottom:8px}
+.tabs button{flex:1;border:0;background:none;padding:9px;border-radius:8px;font-weight:700;cursor:pointer;color:var(--muted)}
+.tabs button[aria-selected=true]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.viewer img{width:100%;border-radius:10px;display:block;background:#ddd}
+.status{font-size:14px;margin-top:10px;color:var(--muted);min-height:1em}
+.status.err{color:var(--red);font-weight:600}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Segmented language */
+.seg{display:flex;border:1.5px solid var(--green-dark);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--paper);padding:12px;font-weight:700;color:var(--green-dark);cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--green-dark);color:#fff}
+
+/* Dialogs */
+dialog{border:0;border-radius:16px;padding:0;width:min(560px,94vw);max-height:90vh}
+dialog::backdrop{background:rgba(20,25,10,.5)}
+.dlg{padding:18px}
+.dlg h2{font:700 22px var(--display);margin:0 0 6px}
+.dlg-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+#previewDlg{width:min(900px,98vw);background:#d9ddd2}
+#previewDlg .dlg{padding:10px}
+#previewHolder{overflow:auto;max-height:72vh}
+#previewHolder img{width:100%;display:block;margin-bottom:8px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+
+/* ===== Quote sheet (rendered off-screen, then turned into the PDF) ===== */
+#sheets{position:fixed;left:-10000px;top:0}
+.sheet{width:816px;min-height:1056px;background:#fff;color:var(--ink);font:14px/1.4 var(--body);padding:52px 52px 48px;display:flex;flex-direction:column}
+.sheet .brand{display:flex;gap:22px;align-items:center}
+.sheet .brand img{width:130px;height:auto}
+.sheet .brand h1{font:700 34px/1.05 var(--display);margin:0 0 6px}
+.sheet .contact{font-size:15px}
+.sheet .contact .sep{color:var(--line);margin:0 8px}
+.sheet .meta{display:grid;grid-template-columns:1fr 330px;gap:24px;margin-top:30px;align-items:start}
+.sheet .lbl{font:700 12px var(--body);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.sheet .cname{font-weight:700;font-size:18px}
+.sheet .caddr{white-space:pre-wrap;margin-top:4px}
+.sheet .band{background:var(--green);color:#fff;padding:9px 16px;font:600 22px var(--display)}
+.sheet .qrow{display:flex;justify-content:space-between;padding:7px 16px;background:#EEF1E8;font-size:15px}
+.sheet .qtot{background:var(--green);color:#fff;font:600 19px var(--display);padding:7px 16px;display:flex;justify-content:space-between}
+.sheet table{width:100%;border-collapse:collapse;margin-top:28px}
+.sheet th{background:var(--green);color:#fff;font:600 14px var(--body);text-align:left;padding:9px 10px}
+.sheet th.r,.sheet td.r{text-align:right}
+.sheet td{padding:10px;vertical-align:top;border-bottom:1px solid #7d7d7d}
+.sheet tbody tr:last-child td{border-bottom:2px solid #7d7d7d}
+.sheet td.prod{font-weight:600}
+.sheet .deposit{text-align:center;font:700 18px var(--body);margin:26px 0 14px}
+.sheet .totals{margin-left:auto;display:grid;grid-template-columns:auto 230px;font-size:16px}
+.sheet .totals div{padding:7px 12px}
+.sheet .totals .k{text-align:right;font-weight:700}
+.sheet .totals .v{border:1.5px solid #7d7d7d;border-bottom-width:0;text-align:right}
+.sheet .totals .v.last{border-bottom-width:1.5px;font-size:18px;font-weight:700}
+.sheet .terms{margin-top:22px;font-size:14.5px;display:grid;gap:12px}
+.sheet .terms p{margin:0}
+.sheet .sign{margin-top:auto;padding-top:48px;display:flex;gap:40px;font-weight:700;font-size:15px}
+.sheet .sign span{display:inline-block;border-bottom:1px solid var(--ink);width:210px;margin-left:6px}
+.sheet .sign .d span{width:150px}
+.sheet h3{font:700 26px var(--display);margin:26px 0 12px}
+.sheet .pv{display:grid;gap:14px}
+.sheet .pv figure{margin:0}
+.sheet .pv img{width:100%;max-height:390px;object-fit:contain;background:#f2f2f2;display:block}
+.sheet .pv figcaption{font:700 14px var(--body);text-transform:uppercase;letter-spacing:.06em;margin-top:5px}
+.sheet .pv.side{grid-template-columns:1fr 1fr}
+.sheet .pv.side img{max-height:620px}
+.sheet .note{font-size:13px;color:var(--muted);margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <img src="img/logo.png" alt="Pakali Paver & Fence logo">
+    <h1>Pakali Paver and Fence<small>Quote &amp; project preview</small></h1>
+    <button class="icon-btn" id="btnSettings" aria-label="Settings" type="button">⚙︎</button>
+  </header>
+
+  <!-- 1. Client -->
+  <section class="card">
+    <h2><span class="n">1</span>Client</h2>
+    <label class="f" for="clientName">Name</label>
+    <input type="text" id="clientName" autocomplete="off" placeholder="Client name">
+    <label class="f" for="clientAddr">Address</label>
+    <textarea id="clientAddr" placeholder="Street&#10;City, State ZIP"></textarea>
+    <div class="row2">
+      <div><label class="f" for="quoteNo">Quote #</label><input type="text" id="quoteNo" inputmode="numeric"></div>
+      <div><label class="f" for="quoteDate">Date</label><input type="text" id="quoteDate"></div>
+    </div>
+  </section>
+
+  <!-- 2. Job -->
+  <section class="card">
+    <h2><span class="n">2</span>Job</h2>
+
+    <div class="svc" id="svcPavers">
+      <label class="head"><input type="checkbox" data-svc="pavers"><span>Stonehurst Pavers<span class="sub">by Tremron · priced per sq ft</span></span></label>
+      <div class="body">
+        <div class="row2">
+          <div><label class="f" for="pvQty">Area (sq ft)</label><input type="number" id="pvQty" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+          <div><label class="f" for="pvRate">Price per sq ft</label><div class="money"><span>$</span><input type="number" id="pvRate" inputmode="decimal" min="0" step="0.01"></div></div>
+        </div>
+        <label class="f">Paver color</label>
+        <div class="swatches" id="swatches" role="radiogroup" aria-label="Paver color"></div>
+        <label class="f" for="pvPattern">Pattern</label>
+        <select id="pvPattern">
+          <option value="random">3-piece random (Stonehurst standard)</option>
+          <option value="herringbone">Herringbone</option>
+          <option value="running">Running bond</option>
+        </select>
+        <label class="check"><input type="checkbox" id="pvBorder"> Dark charcoal border around the edges</label>
+        <label class="f" for="pvWhere">Where? <span style="font-weight:400;color:var(--muted)">(helps the picture)</span></label>
+        <input type="text" id="pvWhere" placeholder="e.g. whole driveway and front walkway">
+        <div class="line-total" id="pvLine">$0.00</div>
+      </div>
+    </div>
+
+    <div class="svc" id="svcTurf">
+      <label class="head"><input type="checkbox" data-svc="turf"><span>Turf Grid Tile<span class="sub">square tiles with turf strips · per sq ft</span></span></label>
+      <div class="body">
+        <div class="row2">
+          <div><label class="f" for="tgQty">Area (sq ft)</label><input type="number" id="tgQty" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+          <div><label class="f" for="tgRate">Price per sq ft</label><div class="money"><span>$</span><input type="number" id="tgRate" inputmode="decimal" min="0" step="0.01"></div></div>
+        </div>
+        <label class="f" for="tgWhere">Where?</label>
+        <input type="text" id="tgWhere" placeholder="e.g. backyard lawn next to the patio">
+        <div class="line-total" id="tgLine">$0.00</div>
+      </div>
+    </div>
+
+    <div class="svc" id="svcFence">
+      <label class="head"><input type="checkbox" data-svc="fence"><span>White PVC Fence<span class="sub">privacy fence · per linear ft</span></span></label>
+      <div class="body">
+        <div class="row2">
+          <div><label class="f" for="fnQty">Length (linear ft)</label><input type="number" id="fnQty" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+          <div><label class="f" for="fnRate">Price per linear ft</label><div class="money"><span>$</span><input type="number" id="fnRate" inputmode="decimal" min="0" step="0.01"></div></div>
+        </div>
+        <label class="f" for="fnWhere">Where?</label>
+        <input type="text" id="fnWhere" placeholder="e.g. along the back and left side of the yard">
+        <div class="line-total" id="fnLine">$0.00</div>
+      </div>
+    </div>
+    <p class="hint">Prices start at the standard rates. Change them here for a sale; change the standard in ⚙︎ Settings.</p>
+  </section>
+
+  <!-- 3. Extras -->
+  <section class="card">
+    <h2><span class="n">3</span>Extra costs</h2>
+    <div id="extras"></div>
+    <button class="btn small" id="btnAddExtra" type="button">+ Add extra cost</button>
+  </section>
+
+  <div class="totalbox" aria-live="polite">
+    <div>Total<small id="depositLine">50% deposit: $0.00</small></div>
+    <b id="grandTotal">$0.00</b>
+  </div>
+
+  <!-- 4. Picture -->
+  <section class="card">
+    <h2><span class="n">4</span>Before &amp; after picture</h2>
+    <div class="photo-pick">
+      <label>📷 Take photo<input type="file" id="camInput" accept="image/*" capture="environment"></label>
+      <label>🖼️ Choose photo<input type="file" id="libInput" accept="image/*"></label>
+    </div>
+    <div class="viewer" id="viewer">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabBefore" aria-selected="true">Before</button>
+        <button type="button" role="tab" id="tabAfter" aria-selected="false" disabled>After</button>
+      </div>
+      <img id="viewImg" alt="Project photo">
+    </div>
+    <button class="btn primary" id="btnGenerate" type="button" disabled>Create the "after" picture</button>
+    <div class="btns2" id="afterActions" style="display:none">
+      <button class="btn" id="btnRetry" type="button">Try again</button>
+      <button class="btn" id="btnSaveImg" type="button">Save picture</button>
+    </div>
+    <div class="status" id="imgStatus" role="status"></div>
+  </section>
+
+  <!-- 5. Quote -->
+  <section class="card">
+    <h2><span class="n">5</span>Quote</h2>
+    <label class="f">Quote language</label>
+    <div class="seg" role="group" aria-label="Quote language">
+      <button type="button" data-lang="en" aria-pressed="true">English</button>
+      <button type="button" data-lang="es" aria-pressed="false">Español</button>
+    </div>
+    <label class="check"><input type="checkbox" id="incPics" checked> Add the before &amp; after pictures as page 2</label>
+    <div class="btns2">
+      <button class="btn" id="btnPreview" type="button">Preview</button>
+      <button class="btn primary" id="btnPdf" type="button">Send / Save PDF</button>
+    </div>
+    <button class="btn" id="btnNew" type="button">Start a new quote</button>
+    <div class="status" id="pdfStatus" role="status"></div>
+  </section>
+</div>
+
+<!-- Settings -->
+<dialog id="settingsDlg">
+  <form method="dialog" class="dlg">
+    <h2>Settings</h2>
+    <p class="hint">Saved on this phone only.</p>
+    <label class="f" for="setKey">Google AI Studio API key</label>
+    <input type="password" id="setKey" autocomplete="off" placeholder="Paste the key here">
+    <p class="hint">Needed for the "after" picture. Quotes work without it.</p>
+    <label class="f">Standard prices</label>
+    <div class="row2">
+      <div><label class="f" for="setPv">Pavers / sq ft</label><div class="money"><span>$</span><input type="number" id="setPv" step="0.01" inputmode="decimal"></div></div>
+      <div><label class="f" for="setTg">Turf Grid Tile / sq ft</label><div class="money"><span>$</span><input type="number" id="setTg" step="0.01" inputmode="decimal"></div></div>
+      <div><label class="f" for="setFn">Fence / linear ft</label><div class="money"><span>$</span><input type="number" id="setFn" step="0.01" inputmode="decimal"></div></div>
+      <div><label class="f" for="setDep">Deposit %</label><input type="number" id="setDep" step="1" inputmode="numeric"></div>
+    </div>
+    <label class="f" for="setModel">Picture model (advanced)</label>
+    <input type="text" id="setModel" autocomplete="off" spellcheck="false">
+    <div class="dlg-actions">
+      <button class="btn" value="cancel" type="submit">Cancel</button>
+      <button class="btn primary" id="btnSaveSettings" value="save" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Quote preview -->
+<dialog id="previewDlg">
+  <div class="dlg">
+    <div id="previewHolder"></div>
+    <div class="dlg-actions">
+      <button class="btn" id="btnClosePreview" type="button">Close</button>
+      <button class="btn primary" id="btnPdf2" type="button">Send / Save PDF</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="sheets" aria-hidden="true"></div>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const num=v=>{const n=parseFloat(String(v??'').replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n};
+const round2=n=>Math.round(n*100)/100;
+const money=n=>'$'+round2(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Settings ---------- */
+const DEFAULTS={key:'',pv:6.45,tg:15,fn:18,dep:50,model:'gemini-2.5-flash-image'};
+const SKEY='pakali-app-settings-v1', DKEY='pakali-app-draft-v1', NUMKEY='pakali-last-quote-no';
+let S=Object.assign({},DEFAULTS); try{Object.assign(S,JSON.parse(store.get(SKEY)||'{}'))}catch(e){}
+
+/* ---------- Paver colors ---------- */
+const COLORS=[
+  {id:'autumn-blend',name:'Autumn Blend',desc:'a warm blend of tan, light brown and reddish-brown stones with some charcoal'},
+  {id:'glacier',name:'Glacier',desc:'a cool blend of light gray, off-white and charcoal gray stones'},
+  {id:'lionsbridge',name:'Lionsbridge',desc:'a blend of medium gray and charcoal stones with some tan/beige stones'},
+  {id:'sand-dune',name:'Sand Dune',desc:'a light blend of cream, beige and sandy tan stones with soft gray'},
+  {id:'sierra',name:'Sierra',desc:'a neutral blend of tan, beige, warm gray and light brown stones'}
+];
+let color='sierra';
+const swWrap=$('swatches');
+COLORS.forEach(c=>{
+  const b=document.createElement('button');b.type='button';b.className='sw';b.setAttribute('role','radio');b.dataset.id=c.id;
+  b.innerHTML=`<img src="img/swatch-${c.id}.jpg" alt=""><span>${c.name}</span>`;
+  b.addEventListener('click',()=>{color=c.id;paintSwatches();save()});
+  swWrap.appendChild(b);
+});
+function paintSwatches(){[...swWrap.children].forEach(b=>b.setAttribute('aria-checked',String(b.dataset.id===color)))}
+
+/* ---------- Services ---------- */
+const SVC={
+  pavers:{box:'svcPavers',qty:'pvQty',rate:'pvRate',line:'pvLine',def:'pv'},
+  turf:{box:'svcTurf',qty:'tgQty',rate:'tgRate',line:'tgLine',def:'tg'},
+  fence:{box:'svcFence',qty:'fnQty',rate:'fnRate',line:'fnLine',def:'fn'}
+};
+document.querySelectorAll('[data-svc]').forEach(cb=>cb.addEventListener('change',()=>{
+  $(SVC[cb.dataset.svc].box).classList.toggle('on',cb.checked);recalc();
+  if(cb.checked){const q=$(SVC[cb.dataset.svc].qty);if(!q.value)q.focus()}
+}));
+const isOn=k=>document.querySelector(`[data-svc="${k}"]`).checked;
+
+/* ---------- Extras ---------- */
+function addExtra(d={}){
+  const r=document.createElement('div');r.className='extra';
+  r.innerHTML=`<input type="text" class="xdesc" placeholder="Description (e.g. remove old concrete)">
+    <div class="money"><span>$</span><input type="number" class="xamt" inputmode="decimal" step="0.01" placeholder="0.00"></div>
+    <button type="button" class="del" aria-label="Remove extra cost">×</button>`;
+  r.querySelector('.xdesc').value=d.desc||'';r.querySelector('.xamt').value=d.amt||'';
+  r.querySelector('.del').addEventListener('click',()=>{r.remove();recalc()});
+  $('extras').appendChild(r);
+}
+const extras=()=>[...document.querySelectorAll('#extras .extra')].map(r=>({desc:r.querySelector('.xdesc').value.trim(),amt:r.querySelector('.xamt').value}))
+  .filter(x=>x.desc||num(x.amt));
+$('btnAddExtra').addEventListener('click',()=>{addExtra();document.querySelector('#extras .extra:last-child .xdesc').focus()});
+
+/* ---------- Totals ---------- */
+function lines(){
+  const out=[];
+  for(const k of Object.keys(SVC)){
+    if(!isOn(k))continue;
+    const q=num($(SVC[k].qty).value),r=num($(SVC[k].rate).value);
+    out.push({k,qty:q,rate:r,total:round2(q*r)});
+  }
+  extras().forEach(x=>out.push({k:'extra',desc:x.desc,qty:1,rate:num(x.amt),total:round2(num(x.amt))}));
+  return out;
+}
+function recalc(){
+  for(const k of Object.keys(SVC)) $(SVC[k].line).textContent=money(num($(SVC[k].qty).value)*num($(SVC[k].rate).value));
+  const t=lines().reduce((a,l)=>a+l.total,0);
+  $('grandTotal').textContent=money(t);
+  $('depositLine').textContent=`${num(S.dep)}% deposit: ${money(t*num(S.dep)/100)}`;
+  save();
+}
+document.addEventListener('input',e=>{if(!e.target.closest('dialog'))recalc()});
+$('pvPattern').addEventListener('change',save);
+
+/* ---------- Draft save/restore ---------- */
+let lang='en';
+function snapshot(){
+  const o={name:$('clientName').value,addr:$('clientAddr').value,no:$('quoteNo').value,date:$('quoteDate').value,color,lang,
+    pattern:$('pvPattern').value,border:$('pvBorder').checked,extras:extras(),svc:{}};
+  for(const k of Object.keys(SVC))o.svc[k]={on:isOn(k),qty:$(SVC[k].qty).value,rate:$(SVC[k].rate).value};
+  o.where={pv:$('pvWhere').value,tg:$('tgWhere').value,fn:$('fnWhere').value};
+  return o;
+}
+function save(){store.set(DKEY,JSON.stringify(snapshot()));if($('quoteNo').value)store.set(NUMKEY,$('quoteNo').value)}
+const todayStr=()=>new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+function nextNo(){const l=store.get(NUMKEY);return l&&num(l)?String(num(l)+1):''}
+function load(o){
+  $('clientName').value=o.name||'';$('clientAddr').value=o.addr||'';$('quoteNo').value=o.no||'';$('quoteDate').value=o.date||todayStr();
+  color=o.color||'sierra';paintSwatches();setLang(o.lang||'en',true);
+  $('pvPattern').value=o.pattern||'random';$('pvBorder').checked=!!o.border;
+  for(const k of Object.keys(SVC)){
+    const s=(o.svc||{})[k]||{};const cb=document.querySelector(`[data-svc="${k}"]`);
+    cb.checked=!!s.on;$(SVC[k].box).classList.toggle('on',cb.checked);
+    $(SVC[k].qty).value=s.qty||'';$(SVC[k].rate).value=s.rate!==undefined&&s.rate!==''?s.rate:S[SVC[k].def];
+  }
+  const w=o.where||{};$('pvWhere').value=w.pv||'';$('tgWhere').value=w.tg||'';$('fnWhere').value=w.fn||'';
+  $('extras').innerHTML='';(o.extras&&o.extras.length?o.extras:[{}]).forEach(addExtra);
+  recalc();
+}
+let draft=null;try{draft=JSON.parse(store.get(DKEY)||'null')}catch(e){}
+load(draft||{no:nextNo()});
+
+$('btnNew').addEventListener('click',()=>{
+  if(!confirm('Clear this quote and start a new one?'))return;
+  const n=nextNo();
+  beforeData=null;afterData=null;showViewer();
+  load({no:n,lang});
+  window.scrollTo({top:0,behavior:'smooth'});$('clientName').focus();
+});
+
+/* ---------- Language ---------- */
+function setLang(l,silent){lang=l;document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===l)));if(!silent)save()}
+document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
+
+/* ---------- Settings dialog ---------- */
+const dlg=$('settingsDlg');
+$('btnSettings').addEventListener('click',()=>{
+  $('setKey').value=S.key;$('setPv').value=S.pv;$('setTg').value=S.tg;$('setFn').value=S.fn;$('setDep').value=S.dep;$('setModel').value=S.model;
+  dlg.showModal();
+});
+dlg.addEventListener('close',()=>{
+  if(dlg.returnValue!=='save')return;
+  const old={pv:S.pv,tg:S.tg,fn:S.fn};
+  S.key=$('setKey').value.trim();S.pv=num($('setPv').value);S.tg=num($('setTg').value);S.fn=num($('setFn').value);
+  S.dep=num($('setDep').value)||50;S.model=$('setModel').value.trim()||DEFAULTS.model;
+  store.set(SKEY,JSON.stringify(S));
+  // Update any price that was still on the old standard
+  for(const k of Object.keys(SVC)){const i=$(SVC[k].rate);if(num(i.value)===num(old[SVC[k].def])||!i.value)i.value=S[SVC[k].def]}
+  updateGenerateBtn();recalc();
+});
+
+/* ---------- Photos ---------- */
+let beforeData=null, afterData=null, view='before';
+function fileToJpeg(file,max=1600){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);const img=new Image();
+    img.onload=()=>{
+      let w=img.naturalWidth,h=img.naturalHeight;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
+      const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);res({data:c.toDataURL('image/jpeg',0.88),w,h});
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('That photo could not be opened. Try another one.'))};
+    img.src=url;
+  });
+}
+async function onPick(e){
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  try{beforeData=await fileToJpeg(f);afterData=null;view='before';showViewer();setStatus('')}
+  catch(err){setStatus(err.message,true)}
+}
+$('camInput').addEventListener('change',onPick);$('libInput').addEventListener('change',onPick);
+function showViewer(){
+  $('viewer').classList.toggle('show',!!beforeData);
+  $('tabAfter').disabled=!afterData;
+  if(!afterData&&view==='after')view='before';
+  $('tabBefore').setAttribute('aria-selected',String(view==='before'));$('tabAfter').setAttribute('aria-selected',String(view==='after'));
+  if(beforeData)$('viewImg').src=view==='after'&&afterData?afterData.data:beforeData.data;
+  $('afterActions').style.display=afterData?'grid':'none';
+  $('btnGenerate').style.display=afterData?'none':'block';
+  updateGenerateBtn();
+}
+$('tabBefore').addEventListener('click',()=>{view='before';showViewer()});
+$('tabAfter').addEventListener('click',()=>{view='after';showViewer()});
+function updateGenerateBtn(){$('btnGenerate').disabled=!beforeData}
+function setStatus(t,err,spin){const s=$('imgStatus');s.className='status'+(err?' err':'');s.innerHTML=(spin?'<span class="spinner"></span>':'')+esc(t)}
+
+/* ---------- AI picture ---------- */
+const PATTERN={random:'a random 3-piece ashlar pattern mixing 6x9, 9x9 and 9x12 inch stones',herringbone:'a 45-degree herringbone pattern',running:'a running bond (offset brick) pattern'};
+async function urlToB64(u){const r=await fetch(u);const b=await r.blob();return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.readAsDataURL(b)})}
+function aspect(w,h){
+  const opts={'1:1':1,'2:3':2/3,'3:2':1.5,'3:4':.75,'4:3':4/3,'4:5':.8,'5:4':1.25,'9:16':9/16,'16:9':16/9};
+  const r=w/h;let best='1:1',d=9;for(const [k,v] of Object.entries(opts)){const x=Math.abs(Math.log(r/v));if(x<d){d=x;best=k}}return best;
+}
+async function buildRequest(){
+  const parts=[];const refs=[];let n=2;
+  let txt='You are editing a real photograph of a customer\'s property for a hardscaping company\'s quote.\n'+
+  'IMAGE 1 is the BEFORE photo. Produce the AFTER photo of the exact same scene, showing the finished work described below.\n'+
+  'Rules: keep the same camera angle, framing, house, roof, windows, doors, plants, trees, sky, lighting and shadows as IMAGE 1. '+
+  'Only change the areas where the work is done. It must look like a real photograph of a finished, professional installation, not a 3D render. '+
+  'Remove dirt, debris, tools and construction mess from the work area. Do not add people, cars, furniture, text, logos or watermarks.\n\nWORK TO SHOW:\n';
+  if(isOn('pavers')){
+    const c=COLORS.find(x=>x.id===color);
+    txt+=`- PAVERS: Area: ${$('pvWhere').value.trim()||'the main driveway / patio / walkway ground area in the photo (concrete, dirt or patchy grass)'}. `+
+      `Install Stonehurst concrete pavers by Tremron, color "${c.name}": ${c.desc}. IMAGE ${n} is a photo of this paver color and texture (it was photographed from a printed brochure, so ignore any yellow-green tint and match the true colors described). `+
+      `Lay them in ${PATTERN[$('pvPattern').value]}, tight sand-filled joints, natural slate-like texture, slight color variation from stone to stone.`+
+      ($('pvBorder').checked?' Finish all edges with a soldier-course border of solid dark charcoal pavers.':' Use the same paver color along the edges.')+' Clean straight edges where pavers meet the lawn.\n';
+    refs.push('img/swatch-'+color+'.jpg');n++;
+  }
+  if(isOn('turf')){
+    txt+=`- TURF GRID TILE: Area: ${$('tgWhere').value.trim()||'the main yard/lawn area in the photo'}. Install large square light-gray/white concrete tiles (about 24x24 inches) in an even grid, with strips of green turf (about 3-4 inches) between every tile, like IMAGE ${n}. The rest of the lawn becomes healthy, even green grass.\n`;
+    refs.push('img/ref-turf-grid.jpg');n++;
+  }
+  if(isOn('fence')){
+    txt+=`- FENCE: Location: ${$('fnWhere').value.trim()||'along the property lines visible in the photo'}. Install a white PVC (vinyl) privacy fence exactly like IMAGE ${n}: solid white panels about 6 ft tall, square white posts with flat caps, even spacing, perfectly straight and plumb.\n`;
+    refs.push('img/ref-fence.jpg');n++;
+  }
+  parts.push({text:txt});
+  parts.push({inlineData:{mimeType:'image/jpeg',data:beforeData.data.split(',')[1]}});
+  for(const u of refs)parts.push({inlineData:{mimeType:'image/jpeg',data:await urlToB64(u)}});
+  return {contents:[{role:'user',parts}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{aspectRatio:aspect(beforeData.w,beforeData.h)}}};
+}
+async function callGemini(body){
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(S.model)}:generateContent`,{
+    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.key},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const m=(j.error&&j.error.message)||('Error '+r.status);const e=new Error(m);e.status=r.status;throw e}
+  return j;
+}
+async function generate(){
+  if(!beforeData)return;
+  if(!S.key){setStatus('Add the Google AI Studio key in ⚙︎ Settings first.',true);$('btnSettings').click();return}
+  if(!isOn('pavers')&&!isOn('turf')&&!isOn('fence')){setStatus('Tick at least one service in step 2 (Pavers, Turf Grid Tile or Fence).',true);return}
+  $('btnGenerate').disabled=true;$('btnRetry').disabled=true;
+  setStatus('Creating the picture… this takes about 10–30 seconds.',false,true);
+  try{
+    const body=await buildRequest();let j;
+    try{j=await callGemini(body)}
+    catch(e){ if(e.status===400&&/imageConfig|aspect/i.test(e.message)){delete body.generationConfig.imageConfig;j=await callGemini(body)} else throw e }
+    const parts=(((j.candidates||[])[0]||{}).content||{}).parts||[];
+    const p=parts.find(x=>x.inlineData||x.inline_data);
+    if(!p){const t=parts.map(x=>x.text).filter(Boolean).join(' ');throw new Error('No picture came back. '+(t?'Google said: '+t:'Try again, or describe the area in "Where?".'))}
+    const d=p.inlineData||p.inline_data;const src=`data:${d.mimeType||d.mime_type||'image/png'};base64,${d.data}`;
+    const dims=await new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>res({w:1,h:1});i.src=src});
+    afterData={data:src,...dims};view='after';showViewer();setStatus('Done. Tap Before / After to compare.');
+  }catch(e){
+    let m=e.message||String(e);
+    if(e.status===400&&/API key/i.test(m))m='The API key is not valid. Check it in ⚙︎ Settings.';
+    else if(e.status===429||/quota|billing/i.test(m))m='Google refused because billing or quota is not set up for this key. Set up billing in Google AI Studio. ('+m+')';
+    else if(e instanceof TypeError)m='No internet connection, or the request was blocked. Try again.';
+    setStatus(m,true);
+  }finally{$('btnGenerate').disabled=!beforeData;$('btnRetry').disabled=false}
+}
+$('btnGenerate').addEventListener('click',generate);
+$('btnRetry').addEventListener('click',generate);
+async function shareOrDownload(blob,filename){
+  const file=new File([blob],filename,{type:blob.type});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:filename});return 'shared'}catch(e){if(e.name==='AbortError')return 'cancelled'}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return 'downloaded';
+}
+$('btnSaveImg').addEventListener('click',async()=>{
+  if(!afterData)return;const b=await (await fetch(afterData.data)).blob();
+  const name=($('clientName').value.trim()||'Project')+' - after.'+(b.type.includes('png')?'png':'jpg');
+  await shareOrDownload(b,name.replace(/[\\/:*?"<>|]/g,''));
+});
+
+/* ---------- Quote sheet ---------- */
+const T={
+ en:{rec:'Recipient:',q:'Quote #',sent:'Sent on',total:'Total',prod:'Product/Service',desc:'Description',qty:'Qty.',unit:'Unit Price',sub:'Subtotal',
+   dep:a=>`A deposit of <b>${a}</b> will be required to begin.`,
+   terms:d=>[`To initiate the project, a down payment of ${d}% will be required, with the remaining ${100-d}% due on the day of installation. Payments can be made via Zelle, cash, or cashier's check. Please note that payments made by credit card will incur a 3.5% processing fee.`,
+     `In the event that services are not performed by PAKALI PAVER AND FENCE, a fee of $300 will be charged to approve documentation with the HOA.`],
+   sig:'Signature:',date:'Date:',sqft:'sq ft',lft:'linear ft',
+   pv:{p:'Stonehurst Pavers by Tremron',d:(c,pt,b)=>`Supply and install Stonehurst pavers by Tremron. Color: ${c}. Pattern: ${pt}.${b?' Dark charcoal border.':''}`},
+   pat:{random:'3-piece random',herringbone:'Herringbone',running:'Running bond'},
+   tg:{p:'Turf Grid Tile',d:'Supply and install Turf Grid Tile: square tiles in a grid with turf joints.'},
+   fn:{p:'White PVC Fence',d:'Supply and install white PVC (vinyl) privacy fence.'},
+   ex:'Additional work',prev:'Project Preview',before:'Before',after:'After',
+   note:'Illustration for reference only. Final appearance may vary.'},
+ es:{rec:'Cliente:',q:'Cotización #',sent:'Fecha',total:'Total',prod:'Producto/Servicio',desc:'Descripción',qty:'Cant.',unit:'Precio unitario',sub:'Subtotal',
+   dep:a=>`Se requiere un depósito de <b>${a}</b> para comenzar.`,
+   terms:d=>[`Para iniciar el proyecto se requiere un pago inicial del ${d}%, y el ${100-d}% restante se paga el día de la instalación. Los pagos pueden hacerse por Zelle, en efectivo o con cheque de caja. Tenga en cuenta que los pagos con tarjeta de crédito tienen un cargo por procesamiento del 3.5%.`,
+     `En caso de que los servicios no sean realizados por PAKALI PAVER AND FENCE, se cobrará una tarifa de $300 por la aprobación de la documentación con la HOA.`],
+   sig:'Firma:',date:'Fecha:',sqft:'pie²',lft:'pie lineal',
+   pv:{p:'Pavers Stonehurst de Tremron',d:(c,pt,b)=>`Suministro e instalación de pavers Stonehurst de Tremron. Color: ${c}. Patrón: ${pt}.${b?' Borde color carbón oscuro.':''}`},
+   pat:{random:'aleatorio de 3 piezas',herringbone:'espiga (herringbone)',running:'traslape (running bond)'},
+   tg:{p:'Turf Grid Tile',d:'Suministro e instalación de losetas cuadradas en cuadrícula con juntas de césped (Turf Grid Tile).'},
+   fn:{p:'Cerca de PVC blanca',d:'Suministro e instalación de cerca de privacidad de PVC (vinilo) blanca.'},
+   ex:'Trabajo adicional',prev:'Vista previa del proyecto',before:'Antes',after:'Después',
+   note:'Imagen ilustrativa solo como referencia. El resultado final puede variar.'}
+};
+const fmtQty=q=>q.toLocaleString('en-US',{maximumFractionDigits:2});
+function sheetsHtml(){
+  const t=T[lang];const L=lines();const tot=L.reduce((a,l)=>a+l.total,0);const dep=num(S.dep);
+  const c=COLORS.find(x=>x.id===color).name;
+  const rowsHtml=L.map(l=>{
+    let p,d,q;
+    if(l.k==='pavers'){p=t.pv.p;d=t.pv.d(c,t.pat[$('pvPattern').value],$('pvBorder').checked);q=`${fmtQty(l.qty)} ${t.sqft}`}
+    else if(l.k==='turf'){p=t.tg.p;d=t.tg.d;q=`${fmtQty(l.qty)} ${t.sqft}`}
+    else if(l.k==='fence'){p=t.fn.p;d=t.fn.d;q=`${fmtQty(l.qty)} ${t.lft}`}
+    else {p=t.ex;d=esc(l.desc);q='1'}
+    return `<tr><td class="prod">${p}</td><td>${d}</td><td class="r">${q}</td><td class="r">${money(l.rate)}</td><td class="r">${money(l.total)}</td></tr>`;
+  }).join('');
+  const logo=document.querySelector('.top img').src;
+  const head=`<header class="brand"><img src="${logo}" alt=""><div><h1>Pakali Paver and Fence</h1><div class="contact">(863) 316-2069<span class="sep">|</span>pakalipaver@gmail.com</div></div></header>`;
+  const p1=`<div class="sheet">${head}
+   <section class="meta"><div><div class="lbl">${t.rec}</div><div class="cname">${esc($('clientName').value)||'&nbsp;'}</div><div class="caddr">${esc($('clientAddr').value)}</div></div>
+   <div><div class="band">${t.q}${esc($('quoteNo').value)}</div><div class="qrow"><span>${t.sent}</span><span>${esc($('quoteDate').value)}</span></div><div class="qtot"><span>${t.total}</span><span>${money(tot)}</span></div></div></section>
+   <table><colgroup><col style="width:23%"><col style="width:36%"><col style="width:15%"><col style="width:13%"><col style="width:13%"></colgroup>
+   <thead><tr><th>${t.prod}</th><th>${t.desc}</th><th class="r">${t.qty}</th><th class="r">${t.unit}</th><th class="r">${t.total}</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+   <p class="deposit">${t.dep(money(round2(tot*dep/100)))}</p>
+   <div class="totals"><div class="k">${t.sub}</div><div class="v">${money(tot)}</div><div class="k">${t.total}</div><div class="v last">${money(tot)}</div></div>
+   <section class="terms">${t.terms(dep).map(x=>`<p>${x}</p>`).join('')}</section>
+   <footer class="sign"><div>${t.sig}<span></span></div><div class="d">${t.date}<span></span></div></footer></div>`;
+  let p2='';
+  if($('incPics').checked&&beforeData&&afterData){
+    const portrait=beforeData.h>beforeData.w;
+    p2=`<div class="sheet">${head}<h3>${t.prev}</h3><div class="pv ${portrait?'side':''}">
+      <figure><img src="${beforeData.data}"><figcaption>${t.before}</figcaption></figure>
+      <figure><img src="${afterData.data}"><figcaption>${t.after}</figcaption></figure></div>
+      <p class="note">${t.note}</p></div>`;
+  }
+  return p1+p2;
+}
+async function renderPages(){
+  const holder=$('sheets');holder.innerHTML=sheetsHtml();
+  await Promise.all([...holder.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  const out=[];
+  for(const s of holder.querySelectorAll('.sheet')){
+    const cv=await html2canvas(s,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});out.push(cv);
+  }
+  holder.innerHTML='';return out;
+}
+function pdfName(){const no=$('quoteNo').value.trim(),n=$('clientName').value.trim();
+  return ((lang==='es'?'Cotizacion Pakali':'Pakali Quote')+(no?' '+no:'')+(n?' - '+n:'')).replace(/[\\/:*?"<>|]/g,'')+'.pdf'}
+function pdfStatus(t,err,spin){const s=$('pdfStatus');s.className='status'+(err?' err':'');s.innerHTML=(spin?'<span class="spinner"></span>':'')+esc(t)}
+async function makePdf(){
+  if(!window.html2canvas||!window.jspdf){pdfStatus('The PDF tools did not load. Check the internet connection and reopen the app.',true);return}
+  if(!lines().length){pdfStatus('Add at least one service or extra cost first.',true);return}
+  for(const b of [$('btnPdf'),$('btnPdf2')])b.disabled=true;pdfStatus('Making the PDF…',false,true);
+  try{
+    const pages=await renderPages();
+    const pdf=new window.jspdf.jsPDF({unit:'in',format:'letter',orientation:'portrait'});
+    pages.forEach((cv,i)=>{if(i)pdf.addPage();const h=Math.min(11,cv.height/cv.width*8.5);pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,0,8.5,h)});
+    const r=await shareOrDownload(pdf.output('blob'),pdfName());
+    pdfStatus(r==='cancelled'?'':r==='shared'?'PDF ready.':'PDF saved: '+pdfName());
+    save();
+  }catch(e){pdfStatus('Could not make the PDF: '+(e.message||e),true)}
+  finally{for(const b of [$('btnPdf'),$('btnPdf2')])b.disabled=false}
+}
+$('btnPdf').addEventListener('click',makePdf);
+$('btnPdf2').addEventListener('click',makePdf);
+$('btnPreview').addEventListener('click',async()=>{
+  if(!lines().length){pdfStatus('Add at least one service or extra cost first.',true);return}
+  pdfStatus('Preparing preview…',false,true);
+  try{const pages=await renderPages();const h=$('previewHolder');h.innerHTML='';
+    pages.forEach(cv=>{const i=new Image();i.src=cv.toDataURL('image/jpeg',0.85);h.appendChild(i)});
+    pdfStatus('');$('previewDlg').showModal();}
+  catch(e){pdfStatus('Could not show the preview: '+(e.message||e),true)}
+});
+$('btnClosePreview').addEventListener('click',()=>$('previewDlg').close());
+
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+window.__pakali={buildRequest,sheetsHtml,lines,setBefore:d=>{beforeData=d;showViewer()},setAfter:d=>{afterData=d;showViewer()}};
+})();
+</script>
+</body>
+</html>
