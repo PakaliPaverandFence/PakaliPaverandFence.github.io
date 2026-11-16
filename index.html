@@ -99,6 +99,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--lime);outline-of
 .tabs button{flex:1;border:0;background:none;padding:9px;border-radius:8px;font-weight:700;cursor:pointer;color:var(--muted)}
 .tabs button[aria-selected=true]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .viewer img{width:100%;border-radius:10px;display:block;background:#ddd}
+.stage{position:relative}
+.stage canvas{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:10px;pointer-events:none;touch-action:none}
+.stage canvas.active{pointer-events:auto;cursor:crosshair}
+.markbar{display:none;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.markbar.show{display:flex}
+.markbar .hint{width:100%;margin:0 0 2px}
+.tool{border:2px solid var(--line);border-radius:999px;padding:7px 12px;font-weight:700;background:#fff;font-size:14px;cursor:pointer}
+.tool[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--lime)}
+.tool i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;z-index:50;display:none;pointer-events:none}
 .status{font-size:14px;margin-top:10px;color:var(--muted);min-height:1em}
 .status.err{color:var(--red);font-weight:600}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite;vertical-align:-3px;margin-right:6px}
@@ -262,7 +272,20 @@ dialog::backdrop{background:rgba(20,25,10,.5)}
         <button type="button" role="tab" id="tabBefore" aria-selected="true">Before</button>
         <button type="button" role="tab" id="tabAfter" aria-selected="false" disabled>After</button>
       </div>
-      <img id="viewImg" alt="Project photo">
+      <div class="markbar" id="markbar">
+        <p class="hint">Mark where the work goes: pick one, then tap the corners on the photo (for the fence, tap along the fence line).</p>
+        <button type="button" class="tool" data-tool="pavers"><i style="background:#FF00FF"></i>Pavers area</button>
+        <button type="button" class="tool" data-tool="turf"><i style="background:#00E5FF"></i>Turf Grid area</button>
+        <button type="button" class="tool" data-tool="fence"><i style="background:#FFD400"></i>Fence line</button>
+        <button type="button" class="tool" id="btnUndo">↶ Undo</button>
+        <button type="button" class="tool" id="btnClearMarks">Clear marks</button>
+      </div>
+      <div class="stage"><img id="viewImg" alt="Project photo"><canvas id="markCanvas"></canvas></div>
+    </div>
+    <label class="f">Picture quality</label>
+    <div class="seg" role="group" aria-label="Picture quality">
+      <button type="button" data-q="standard" aria-pressed="true">Standard · ~4¢</button>
+      <button type="button" data-q="best" aria-pressed="false">Best · ~13¢</button>
     </div>
     <button class="btn primary" id="btnGenerate" type="button" disabled>Create the "after" picture</button>
     <div class="btns2" id="afterActions" style="display:none">
@@ -305,8 +328,8 @@ dialog::backdrop{background:rgba(20,25,10,.5)}
       <div><label class="f" for="setFn">Fence / linear ft</label><div class="money"><span>$</span><input type="number" id="setFn" step="0.01" inputmode="decimal"></div></div>
       <div><label class="f" for="setDep">Deposit %</label><input type="number" id="setDep" step="1" inputmode="numeric"></div>
     </div>
-    <label class="f" for="setModel">Picture model (advanced)</label>
-    <input type="text" id="setModel" autocomplete="off" spellcheck="false">
+    <button type="button" class="btn small" id="btnCopyLink">Copy setup link for another phone</button>
+    <p class="hint">Send this link (privately) to your dad. Opening it saves the key on his phone automatically.</p>
     <div class="dlg-actions">
       <button class="btn" value="cancel" type="submit">Cancel</button>
       <button class="btn primary" id="btnSaveSettings" value="save" type="submit">Save</button>
@@ -326,6 +349,7 @@ dialog::backdrop{background:rgba(20,25,10,.5)}
 </dialog>
 
 <div id="sheets" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 (function(){
@@ -338,9 +362,15 @@ const money=n=>'$'+round2(n).toLocaleString('en-US',{minimumFractionDigits:2,max
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- Settings ---------- */
-const DEFAULTS={key:'',pv:6.45,tg:15,fn:18,dep:50,model:'gemini-2.5-flash-image'};
+const DEFAULTS={key:'',pv:6.45,tg:15,fn:18,dep:50,quality:'standard'};
+const MODELS={standard:'gemini-2.5-flash-image',best:'gemini-3-pro-image-preview'};
 const SKEY='pakali-app-settings-v1', DKEY='pakali-app-draft-v1', NUMKEY='pakali-last-quote-no';
 let S=Object.assign({},DEFAULTS); try{Object.assign(S,JSON.parse(store.get(SKEY)||'{}'))}catch(e){}
+const saveSettings=()=>store.set(SKEY,JSON.stringify(S));
+function toast(t){const el=$('toast');el.textContent=t;el.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.display='none',3500)}
+// Setup link: ...github.io/#key=XXXX saves the key on this phone, then removes it from the address bar
+(function(){const m=location.hash.match(/key=([^&]+)/);if(m){S.key=decodeURIComponent(m[1]).trim();saveSettings();
+  history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>toast('Picture key saved on this phone ✓'),300)}})();
 
 /* ---------- Paver colors ---------- */
 const COLORS=[
@@ -367,7 +397,7 @@ const SVC={
   fence:{box:'svcFence',qty:'fnQty',rate:'fnRate',line:'fnLine',def:'fn'}
 };
 document.querySelectorAll('[data-svc]').forEach(cb=>cb.addEventListener('change',()=>{
-  $(SVC[cb.dataset.svc].box).classList.toggle('on',cb.checked);recalc();
+  $(SVC[cb.dataset.svc].box).classList.toggle('on',cb.checked);recalc();if(typeof updateMarkbar==='function')updateMarkbar();
   if(cb.checked){const q=$(SVC[cb.dataset.svc].qty);if(!q.value)q.focus()}
 }));
 const isOn=k=>document.querySelector(`[data-svc="${k}"]`).checked;
@@ -450,22 +480,36 @@ document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',(
 /* ---------- Settings dialog ---------- */
 const dlg=$('settingsDlg');
 $('btnSettings').addEventListener('click',()=>{
-  $('setKey').value=S.key;$('setPv').value=S.pv;$('setTg').value=S.tg;$('setFn').value=S.fn;$('setDep').value=S.dep;$('setModel').value=S.model;
+  $('setKey').value=S.key;$('setPv').value=S.pv;$('setTg').value=S.tg;$('setFn').value=S.fn;$('setDep').value=S.dep;
   dlg.showModal();
 });
 dlg.addEventListener('close',()=>{
   if(dlg.returnValue!=='save')return;
   const old={pv:S.pv,tg:S.tg,fn:S.fn};
   S.key=$('setKey').value.trim();S.pv=num($('setPv').value);S.tg=num($('setTg').value);S.fn=num($('setFn').value);
-  S.dep=num($('setDep').value)||50;S.model=$('setModel').value.trim()||DEFAULTS.model;
-  store.set(SKEY,JSON.stringify(S));
+  S.dep=num($('setDep').value)||50;
+  saveSettings();
   // Update any price that was still on the old standard
   for(const k of Object.keys(SVC)){const i=$(SVC[k].rate);if(num(i.value)===num(old[SVC[k].def])||!i.value)i.value=S[SVC[k].def]}
   updateGenerateBtn();recalc();
 });
 
+$('btnCopyLink').addEventListener('click',async()=>{
+  const k=$('setKey').value.trim()||S.key;if(!k){toast('Paste the key first');return}
+  const link=location.origin+location.pathname+'#key='+encodeURIComponent(k);
+  try{await navigator.clipboard.writeText(link);toast('Setup link copied — paste it in a private message')}
+  catch(e){prompt('Copy this setup link:',link)}
+});
+/* Picture quality */
+function paintQ(){document.querySelectorAll('[data-q]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.q===S.quality)))}
+document.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{S.quality=b.dataset.q;saveSettings();paintQ()}));
+paintQ();
+
 /* ---------- Photos ---------- */
 let beforeData=null, afterData=null, view='before';
+const MARK_COLORS={pavers:'#FF00FF',turf:'#00E5FF',fence:'#FFD400'};
+let marks={pavers:[],turf:[],fence:[]}, tool=null, history_=[];
+const hasMarks=k=>k==='fence'?marks.fence.length>=2:marks[k].length>=3;
 function fileToJpeg(file,max=1600){
   return new Promise((res,rej)=>{
     const url=URL.createObjectURL(file);const img=new Image();
@@ -480,7 +524,7 @@ function fileToJpeg(file,max=1600){
 }
 async function onPick(e){
   const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
-  try{beforeData=await fileToJpeg(f);afterData=null;view='before';showViewer();setStatus('')}
+  try{beforeData=await fileToJpeg(f);afterData=null;view='before';marks={pavers:[],turf:[],fence:[]};history_=[];tool=null;showViewer();setStatus('')}
   catch(err){setStatus(err.message,true)}
 }
 $('camInput').addEventListener('change',onPick);$('libInput').addEventListener('change',onPick);
@@ -491,10 +535,51 @@ function showViewer(){
   $('tabBefore').setAttribute('aria-selected',String(view==='before'));$('tabAfter').setAttribute('aria-selected',String(view==='after'));
   if(beforeData)$('viewImg').src=view==='after'&&afterData?afterData.data:beforeData.data;
   $('afterActions').style.display=afterData?'grid':'none';
+  updateMarkbar();
   $('btnGenerate').style.display=afterData?'none':'block';
   updateGenerateBtn();
 }
 $('tabBefore').addEventListener('click',()=>{view='before';showViewer()});
+/* ---------- Marking the work area ---------- */
+const cv=$('markCanvas');
+function updateMarkbar(){
+  const show=!!beforeData&&view==='before'&&(isOn('pavers')||isOn('turf')||isOn('fence'));
+  $('markbar').classList.toggle('show',show);
+  document.querySelectorAll('[data-tool]').forEach(b=>{const on=isOn(b.dataset.tool);b.style.display=on?'':'none';if(!on&&tool===b.dataset.tool)tool=null;b.setAttribute('aria-pressed',String(tool===b.dataset.tool))});
+  if(show&&!tool){tool=['pavers','turf','fence'].find(isOn)||null;document.querySelectorAll('[data-tool]').forEach(b=>b.setAttribute('aria-pressed',String(tool===b.dataset.tool)))}
+  cv.classList.toggle('active',show&&!!tool);cv.style.display=view==='before'?'block':'none';
+  redraw();
+}
+document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>{tool=b.dataset.tool;updateMarkbar()}));
+$('btnUndo').addEventListener('click',()=>{const k=history_.pop();if(k){marks[k].pop();redraw()}});
+$('btnClearMarks').addEventListener('click',()=>{marks={pavers:[],turf:[],fence:[]};history_=[];redraw()});
+function drawMarks(ctx,w,h,exportMode){
+  ctx.clearRect(0,0,w,h);ctx.lineJoin='round';ctx.lineCap='round';
+  for(const k of ['pavers','turf','fence']){
+    const pts=marks[k];if(!pts.length||!isOn(k))continue;const c=MARK_COLORS[k];
+    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0]*w,p[1]*h):ctx.moveTo(p[0]*w,p[1]*h));
+    if(k!=='fence'&&pts.length>=3){ctx.closePath();ctx.globalAlpha=exportMode?0.5:0.35;ctx.fillStyle=c;ctx.fill();ctx.globalAlpha=1}
+    ctx.strokeStyle=c;ctx.lineWidth=Math.max(3,w*(k==='fence'?0.012:0.006));ctx.stroke();
+    if(!exportMode)pts.forEach(p=>{ctx.beginPath();ctx.arc(p[0]*w,p[1]*h,Math.max(5,w*0.012),0,7);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=c;ctx.stroke()});
+  }
+}
+function redraw(){
+  const img=$('viewImg');if(!img.clientWidth)return;const d=window.devicePixelRatio||1;
+  cv.width=Math.round(img.clientWidth*d);cv.height=Math.round(img.clientHeight*d);
+  drawMarks(cv.getContext('2d'),cv.width,cv.height,false);
+}
+$('viewImg').addEventListener('load',redraw);window.addEventListener('resize',redraw);
+cv.addEventListener('pointerdown',e=>{
+  if(!tool)return;e.preventDefault();const r=cv.getBoundingClientRect();
+  marks[tool].push([(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]);history_.push(tool);redraw();
+});
+async function markedImage(){
+  const img=new Image();img.src=beforeData.data;await img.decode();
+  const c=document.createElement('canvas');c.width=beforeData.w;c.height=beforeData.h;const x=c.getContext('2d');
+  x.drawImage(img,0,0);const o=document.createElement('canvas');o.width=c.width;o.height=c.height;
+  drawMarks(o.getContext('2d'),o.width,o.height,true);x.drawImage(o,0,0);
+  return c.toDataURL('image/jpeg',0.85).split(',')[1];
+}
 $('tabAfter').addEventListener('click',()=>{view='after';showViewer()});
 function updateGenerateBtn(){$('btnGenerate').disabled=!beforeData}
 function setStatus(t,err,spin){const s=$('imgStatus');s.className='status'+(err?' err':'');s.innerHTML=(spin?'<span class="spinner"></span>':'')+esc(t)}
@@ -506,36 +591,56 @@ function aspect(w,h){
   const opts={'1:1':1,'2:3':2/3,'3:2':1.5,'3:4':.75,'4:3':4/3,'4:5':.8,'5:4':1.25,'9:16':9/16,'16:9':16/9};
   const r=w/h;let best='1:1',d=9;for(const [k,v] of Object.entries(opts)){const x=Math.abs(Math.log(r/v));if(x<d){d=x;best=k}}return best;
 }
+const SCALE='For scale, use the house in the photo: a standard door is about 3 ft wide and 6.7 ft tall, a sliding glass door about 6 ft wide, a one-story wall about 9-10 ft tall, a 2-car garage door about 16 ft wide.';
+function dims(a){if(!a)return '';const w=Math.max(4,Math.round(Math.sqrt(a*1.4)));return `about ${Math.round(a).toLocaleString('en-US')} sq ft, roughly ${w} ft wide by ${Math.max(3,Math.round(a/w))} ft deep`}
 async function buildRequest(){
   const parts=[];const refs=[];let n=2;
+  const anyMarks=['pavers','turf','fence'].some(k=>isOn(k)&&hasMarks(k));
+  if(anyMarks)n=3;
   let txt='You are editing a real photograph of a customer\'s property for a hardscaping company\'s quote.\n'+
-  'IMAGE 1 is the BEFORE photo. Produce the AFTER photo of the exact same scene, showing the finished work described below.\n'+
+  'IMAGE 1 is the BEFORE photo. Produce the AFTER photo of the exact same scene, showing ONLY the finished work described below.\n'+
   'Rules: keep the same camera angle, framing, house, roof, windows, doors, plants, trees, sky, lighting and shadows as IMAGE 1. '+
-  'Only change the areas where the work is done. It must look like a real photograph of a finished, professional installation, not a 3D render. '+
-  'Remove dirt, debris, tools and construction mess from the work area. Do not add people, cars, furniture, text, logos or watermarks.\n\nWORK TO SHOW:\n';
+  'Everything outside the work areas must stay exactly as it is in IMAGE 1 (same grass, same objects). '+
+  'It must look like a real photograph of a finished, professional installation, not a 3D render. '+
+  'Remove dirt, debris, tools and construction mess only inside the work areas. Do not add people, cars, furniture, text, logos or watermarks.\n';
+  if(anyMarks) txt+='IMAGE 2 is the same photo with the work areas marked by the contractor: '+
+    [isOn('pavers')&&hasMarks('pavers')?'the MAGENTA shaded shape = exactly where the pavers go':'',
+     isOn('turf')&&hasMarks('turf')?'the CYAN shaded shape = exactly where the Turf Grid Tile goes':'',
+     isOn('fence')&&hasMarks('fence')?'the YELLOW line = exactly where the fence runs':''].filter(Boolean).join('; ')+
+    '. Follow the marks precisely: the new work fills those marked shapes completely, and nothing outside them changes. The marks are only guides: the final photo must not show any magenta, cyan or yellow.\n';
+  txt+='\nWORK TO SHOW:\n';
   if(isOn('pavers')){
-    const c=COLORS.find(x=>x.id===color);
-    txt+=`- PAVERS: Area: ${$('pvWhere').value.trim()||'the main driveway / patio / walkway ground area in the photo (concrete, dirt or patchy grass)'}. `+
+    const c=COLORS.find(x=>x.id===color);const a=num($('pvQty').value);const w=$('pvWhere').value.trim();
+    txt+='- PAVERS: '+(hasMarks('pavers')?'Area: the magenta shape in IMAGE 2'+(w?` (${w})`:'')+'. ':
+      `Area: ${w||'one single continuous area starting right at the house (or at the existing slab/driveway) and extending out from it'}. Size: ${dims(a)}. ${SCALE} Do NOT pave the whole yard; keep the size proportional. `)+
       `Install Stonehurst concrete pavers by Tremron, color "${c.name}": ${c.desc}. IMAGE ${n} is a photo of this paver color and texture (it was photographed from a printed brochure, so ignore any yellow-green tint and match the true colors described). `+
       `Lay them in ${PATTERN[$('pvPattern').value]}, tight sand-filled joints, natural slate-like texture, slight color variation from stone to stone.`+
       ($('pvBorder').checked?' Finish all edges with a soldier-course border of solid dark charcoal pavers.':' Use the same paver color along the edges.')+' Clean straight edges where pavers meet the lawn.\n';
     refs.push('img/swatch-'+color+'.jpg');n++;
   }
   if(isOn('turf')){
-    txt+=`- TURF GRID TILE: Area: ${$('tgWhere').value.trim()||'the main yard/lawn area in the photo'}. Install large square light-gray/white concrete tiles (about 24x24 inches) in an even grid, with strips of green turf (about 3-4 inches) between every tile, like IMAGE ${n}. The rest of the lawn becomes healthy, even green grass.\n`;
+    const a=num($('tgQty').value);const w=$('tgWhere').value.trim();
+    txt+='- TURF GRID TILE: '+(hasMarks('turf')?'Area: the cyan shape in IMAGE 2'+(w?` (${w})`:'')+'. ':
+      `Area: ${w||'ONE single continuous rectangular zone that starts directly against the house wall / existing patio and extends out into the yard'}. Size: ${dims(a)}. ${SCALE} It must be one connected zone, not separate patches, and must not cover the whole yard. `)+
+      `Inside that area, lay large square light-gray/white concrete tiles (about 24x24 inches) in a perfectly even grid aligned with the house wall, with straight strips of green turf (about 3-4 inches wide) between every tile, exactly like IMAGE ${n}. Grass outside the area stays as it is.\n`;
     refs.push('img/ref-turf-grid.jpg');n++;
   }
   if(isOn('fence')){
-    txt+=`- FENCE: Location: ${$('fnWhere').value.trim()||'along the property lines visible in the photo'}. Install a white PVC (vinyl) privacy fence exactly like IMAGE ${n}: solid white panels about 6 ft tall, square white posts with flat caps, even spacing, perfectly straight and plumb.\n`;
+    const w=$('fnWhere').value.trim();const a=num($('fnQty').value);
+    txt+='- FENCE: '+(hasMarks('fence')?'Location: along the yellow line in IMAGE 2'+(w?` (${w})`:'')+'. ':
+      `Location: ${w||'along the property lines visible in the photo'}${a?` (about ${Math.round(a)} linear ft)`:''}. `)+
+      `Install a BRIGHT WHITE PVC (vinyl) privacy fence exactly like IMAGE ${n}: solid white panels about 6 ft tall, square white posts with flat caps, even spacing, perfectly straight and plumb. `+
+      'IMPORTANT: if there is already a fence in that location (any color, e.g. beige/tan, wood or chain-link), remove it completely and replace it with this new bright white fence. The new fence must be clearly pure white, not beige or cream.\n';
     refs.push('img/ref-fence.jpg');n++;
   }
   parts.push({text:txt});
   parts.push({inlineData:{mimeType:'image/jpeg',data:beforeData.data.split(',')[1]}});
+  if(anyMarks)parts.push({inlineData:{mimeType:'image/jpeg',data:await markedImage()}});
   for(const u of refs)parts.push({inlineData:{mimeType:'image/jpeg',data:await urlToB64(u)}});
   return {contents:[{role:'user',parts}],generationConfig:{responseModalities:['TEXT','IMAGE'],imageConfig:{aspectRatio:aspect(beforeData.w,beforeData.h)}}};
 }
 async function callGemini(body){
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(S.model)}:generateContent`,{
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODELS[S.quality]||MODELS.standard)}:generateContent`,{
     method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.key},body:JSON.stringify(body)});
   const j=await r.json().catch(()=>({}));
   if(!r.ok){const m=(j.error&&j.error.message)||('Error '+r.status);const e=new Error(m);e.status=r.status;throw e}
@@ -552,7 +657,7 @@ async function generate(){
     try{j=await callGemini(body)}
     catch(e){ if(e.status===400&&/imageConfig|aspect/i.test(e.message)){delete body.generationConfig.imageConfig;j=await callGemini(body)} else throw e }
     const parts=(((j.candidates||[])[0]||{}).content||{}).parts||[];
-    const p=parts.find(x=>x.inlineData||x.inline_data);
+    const imgs=parts.filter(x=>(x.inlineData||x.inline_data)&&!x.thought);const p=imgs[imgs.length-1];
     if(!p){const t=parts.map(x=>x.text).filter(Boolean).join(' ');throw new Error('No picture came back. '+(t?'Google said: '+t:'Try again, or describe the area in "Where?".'))}
     const d=p.inlineData||p.inline_data;const src=`data:${d.mimeType||d.mime_type||'image/png'};base64,${d.data}`;
     const dims=await new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.onerror=()=>res({w:1,h:1});i.src=src});
